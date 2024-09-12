@@ -1,0 +1,154 @@
+---
+title: "Homework3 - Practice with Control Flow and Functions" 
+author: "Upendra Joshi" 
+format: html 
+editor: visual
+
+---
+In this homework I will practice about Control Flow and how to write Function.
+Functions enhances efficiency in R programming. But First lets practice Control
+Flow 
+
+## Task 1: Control Flow 
+We can take out old data from Homework 2 and load it here. Make sure that the file "hw2_list.rda" is in the working directory. Now load the file in the R environment
+
+```{r}
+load("hw2_list.rda")
+head(bp_list)
+str(bp_list)
+df_bp = bp_list #creating a data frame so that it will not modify original data frame
+```
+The "bp_list" file is in the environment and "df_bp" is created. 
+
+1) Suppose we want to characterize the post-treatment (or placebo) blood pressure measurement as
+optimal (≤ 120), borderline (120 < bp ≤ 130), and high (> 130). First, create a new column
+in each data frame from above called status. You can do this via
+
+
+```{r}
+df_bp$treatment$status <- character(20) #as we have 20 obs in treatment (see str ouptut above) I used 20 here
+df_bp$placebo$status <- character(10)
+head(df_bp)
+str(df_bp)
+```
+2) For the non-placebo data frame (within the list), create a for loop and use if/then/else logic to
+create the status column’s values.
+
+```{r}
+for (i in 1:nrow(df_bp$treatment)){
+if (df_bp$treatment$post_bp[i] <= 120) {
+  df_bp$treatment$status[i] <- "optimal"
+} else if (df_bp$treatment$post_bp[i] > 120 & df_bp$treatment$post_bp[i] <= 130) {
+  df_bp$treatment$status[i] <- "borderline"
+} else df_bp$treatment$status[i] <- "High"
+}
+df_bp$treatment
+```
+3) Lets repeat the same for placebo data frame (within the list)
+
+```{r}
+for (i in 1:nrow(df_bp$placebo)){
+if (df_bp$placebo$post_bp[i] <= 120) {
+  df_bp$placebo$status[i] <- "optimal"
+} else if (df_bp$placebo$post_bp[i] > 120 & df_bp$placebo$post_bp[i] <= 130) {
+  df_bp$placebo$status[i] <- "borderline"
+} else df_bp$placebo$status[i] <- "High"
+}
+df_bp$placebo
+```
+
+## Task 2: Function Writing
+
+Continue the previous example. Suppose you would eventually have many data sets in the form of the two
+above. You want to write a function to do some things for you quickly.
+
+1) Write a function that 
+
+• takes in a list with two data frames in it (a treatment and a placebo data frame) as an argument.
+Give no default value.
+
+• takes in an R function (that would find a summary of a numeric column) with the default value
+being set to "mean" (notice this is a quoted string).
+
+• Finds the statistic of interest (as defined by the user input) for the pre, post, and diff columns
+of both data frames.
+
+– Use my_fun <- get(stat) within the function to get the function from the quoted string.
+• These six values should then be returned as a named list with meaningful names - this is a
+somewhat challenging part!
+
+– I’m going to let you consider what to do but you might create a vector of names that is
+created dynamically based on the statistic passed, create a vector with the actual statistic
+values, and then assign names() to your vector. Then return that (an atomic vector (our
+standard 1D vector) with names can be returned instead of a list).
+
+
+```{r}
+# Define the function
+summarize_df <- function(df_list, stat = "mean") {
+  # Get the function from the quoted string
+  my_fun <- get(stat)
+  
+  # Initialize an empty list to store results
+  result_list <- list()
+  
+  # Loop through each data frame in the list
+  for (df_name in names(df_list)) {
+    df <- df_list[[df_name]]
+    
+    # Calculate the statistics for each numeric column
+    pre_bp_stat <- my_fun(df$pre_bp, na.rm = TRUE)
+    post_bp_stat <- my_fun(df$post_bp, na.rm = TRUE)
+    diff_bp_stat <- my_fun(df$diff_bp, na.rm = TRUE)
+    
+    # Create a vector of names dynamically
+    stat_names <- c(paste0(stat, "_pre_bp_", df_name),
+                    paste0(stat, "_post_bp_", df_name),
+                    paste0(stat, "_diff_bp_", df_name))
+    
+    # Create a vector of the actual statistic values
+    stat_values <- c(pre_bp_stat, post_bp_stat, diff_bp_stat)
+    
+    # Assign names to the vector
+    names(stat_values) <- stat_names
+    
+    # Add the named vector to the result list
+    result_list[[df_name]] <- stat_values
+  }
+  
+  # Combine all results into a single named list
+  combined_result <- do.call(c, result_list)
+  
+  return(combined_result)
+}
+
+```
+
+• Finally, apply your function to you list of data frames from previous. Use it without specifying
+your statistic, with specifying your statistic as "var", "sd", "min", and "max".
+
+```{r}
+# Apply the function without specifying the statistic (default is "mean")
+summary_mean <- summarize_df(df_bp)
+summary_mean
+# Apply the function with specifying the statistic as "var"
+summary_var <- summarize_df(df_bp, stat = "var")
+print(summary_var)
+
+# Apply the function with specifying the statistic as "sd"
+summary_sd <- summarize_df(df_bp, stat = "sd")
+print(summary_sd)
+
+# Apply the function with specifying the statistic as "min"
+summary_min <- summarize_df(df_bp, stat = "min")
+print(summary_min)
+
+# Apply the function with specifying the statistic as "max"
+summary_max <- summarize_df(df_bp, stat = "max")
+print(summary_max)
+
+
+```
+
+
+
